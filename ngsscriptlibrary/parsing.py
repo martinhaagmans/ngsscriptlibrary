@@ -34,6 +34,7 @@ def samplesheet_to_sample_genesis(samplesheet):
         sample = line[0]
         genesis = line[-1]
         genesis = genesis.replace('.NGS', '')
+        genesis = genesis.replace('.SV', '')
         sample_genesis.append((sample, genesis))
     return sample_genesis
 
