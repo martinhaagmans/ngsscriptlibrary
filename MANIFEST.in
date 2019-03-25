@@ -1,0 +1,2 @@
+include ngsscriptlibrary/docs/*
+include README.md
