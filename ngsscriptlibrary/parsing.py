@@ -64,11 +64,7 @@ def parse_samplesheet_for_pipeline(samplesheet, db, exclude=None):
         samples_todo[line[0]] = TD.get_todo(genesis)
         samples_todo[line[0]]['serie'] = serie
         samples_todo[line[0]]['genesis'] = genesis
-        try:
-            samples_todo[line[0]]['capture']
-        except KeyError:
-            pass
-        else:
+        if not samples_todo[line[0]]['amplicon']:
             vcapture = samples_todo[line[0]]['capture']
             oid = TD.get_oid_for_vcapture(vcapture)
             samples_todo[line[0]]['oid'] = oid
