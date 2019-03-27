@@ -369,11 +369,11 @@ class RiskScore:
         basedir = os.path.dirname(os.path.realpath(__file__))
 
         if single is None:
-            self.single = os.path.join(basedir, 'docs', f'{genesis}_singlescores.csv')
+            self.single = os.path.join(basedir, 'docs', '{}_singlescores.csv'.format(genesis))
         else:
             self.single = single
         if double is None:
-            self.double = os.path.join(basedir, 'docs', f'{genesis}_doublescores.csv')
+            self.double = os.path.join(basedir, 'docs', '{}_doublescores.csv'.format(genesis))
         else:
             self.double = double
 
@@ -382,7 +382,7 @@ class RiskScore:
         vcfreader = vcf.Reader(open(vcf_file, 'r'))
 
         for record in vcfreader:
-            locus = f'{record.CHROM}:{record.POS}'
+            locus = '{}:{}'.format(record.CHROM, record.POS)
             for call in record:
                 gt = call['GT']
                 self.genotypes[locus] = gt
@@ -394,7 +394,7 @@ class RiskScore:
             _header = next(reader)
             for line in reader:
                 chrom, gpos, *_ = line
-                locus = f'{chrom}:{gpos}'
+                locus = '{}:{}'.format(chrom, pos)
                 loci.append(locus)
 
         with open(self.double) as f:
@@ -412,7 +412,7 @@ class RiskScore:
             _header = next(reader)
             for line in reader:
                 chrom, gpos, score_wt, score_het, score_hom = line
-                locus = f'{chrom}:{gpos}'
+                locus = '{}:{}'.format(chrom, pos)
                 scores[locus] = Decimal(score_wt), Decimal(score_het), Decimal(score_hom)
         return scores
 
@@ -423,7 +423,7 @@ class RiskScore:
             locus1, locus2, *_ = next(reader)
             for line in reader:
                 gt_locus1, gt_locus2, score = line
-                scores[f'{gt_locus1}:{gt_locus2}'] = Decimal(score)
+                scores['{}:{}'.format(gt_locus1, gt_locus2)] = Decimal(score)
         return scores, (locus1, locus2)
             
     def get_sum_single_scores(self):
@@ -451,7 +451,7 @@ class RiskScore:
             elif locus == locus2:
                 locus2_gt = zygosity
         try:
-            score = scores[f'{locus1_gt}:{locus2_gt}']
+            score = scores['{}:{}'.format(locus1_gt, locus2_gt)]
         except KeyError:
             pass
         return score
