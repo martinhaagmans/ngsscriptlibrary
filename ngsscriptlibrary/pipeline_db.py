@@ -656,15 +656,17 @@ class MetricsDBReader:
         sql = """SELECT PERCENTAGE
         FROM procenttargetcovered
         WHERE (SAMPLE='{sa}' AND SERIE='{se}' AND TARGET='{t}')
-        """.format(sa=self.sampleID, se=self.serie, t=self.target)
+        """.format(sa=self.sampleID, se=self.serie, t=diagnostic_target)
         self.c.execute(sql)
         return self.c.fetchone()[0]
 
-    def get_sanger_fragments(self):
+    def get_sanger_fragments(self, diagnostic_target=None):
+        if diagnostic_target is None:
+            diagnostic_target = self.target
         sql = """SELECT DATA
         FROM sangers
         WHERE (SAMPLE='{sa}' AND SERIE='{se}' AND TARGET='{t}')
-        """.format(sa=self.sampleID, se=self.serie, t=self.target)
+        """.format(sa=self.sampleID, se=self.serie, t=diagnostic_target)
         self.c.execute(sql)
         sangers = json.loads(self.c.fetchone()[0])
         return sangers
