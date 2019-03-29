@@ -228,6 +228,76 @@ def get_indel_dicts(bamfile, target):
     return indel_length_coverage
 
 
+def get_indel_dict_for_locus(bamfile, locus):
+    samfile = pysam.AlignmentFile(bamfile, "rb")
+
+    indel_coverage = defaultdict(int)
+    indel_length = defaultdict(list)
+    indel_length_coverage = dict()
+
+    c, s = locus.split(':')
+    e = s
+
+    for alignment in samfile.fetch(c, int(s), int(e)):
+
+        if good_alignment(alignment) and cigar_has_insertion(alignment.cigarstring):
+
+            read_start = alignment.get_reference_positions(full_length=True)[0]
+
+            if read_start is None:
+                continue
+
+            locus, length = parse_cigartuple(alignment.cigar, read_start,
+                                                alignment.reference_name)
+
+            if pos_in_interval(int(locus.split(':')[1]), s, e):
+
+                if locus in indel_length:
+                    indel_length[locus].append(length)
+                else:
+                    indel_length[locus] = [length]
+
+                indel_coverage[locus] += 1
+
+    samfile.close()
+
+    for locus, coverage in indel_coverage.items():
+        indel_length_coverage[locus] = tuple(set(indel_length[locus])), int(coverage)
+
+    return indel_length_coverage
+
+
+def get_indel_dict_for_locus(bamfile, targetlocus):
+    samfile = pysam.AlignmentFile(bamfile, "rb")
+
+    indel_coverage = defaultdict(int)
+    indel_length = defaultdict(list)
+    indel_length_coverage = dict()
+
+    c, s = targetlocus.split(':')
+    s = int(s) - 151
+    e = int(s) + 151
+
+    for alignment in samfile.fetch(c, int(s), int(e)):
+
+        if good_alignment(alignment) and cigar_has_insertion(alignment.cigarstring):
+
+            read_start = alignment.get_reference_positions(full_length=True)[0]
+
+            if read_start is None:
+                continue
+
+            locus, length = parse_cigartuple(alignment.cigar, read_start,
+                                             alignment.reference_name)
+
+            if str(targetlocus) == str(locus):
+                indel_coverage[locus] += 1
+
+    samfile.close()
+
+    return indel_coverage
+
+
 def parse_doc(fn, ref, loci):
     data = dict()
     with open(fn) as f:

@@ -217,7 +217,7 @@ class TargetDatabase:
             todo_list['panel'] = self.get_current_panel(genesis)
         todo_list['cnvscreening'] = self.do_x_in_pipeline(genesis, 'cnvscreening')
         todo_list['cnvdiagnostiek'] = self.do_x_in_pipeline(genesis,'cnvdiagnostiek')
-        todo_list['mozaiekdiagnostiek'] = self.do_x_in_pipeline(genesis,'mozaiekdiagnostiek')
+        todo_list['mozaiek'] = self.do_x_in_pipeline(genesis,'mozaiekdiagnostiek')
         todo_list['riskscore'] = self.do_x_in_pipeline(genesis, 'riskscore')    
                                                                                                               
         if todo_list['capture'].split('v')[0] == todo_list['pakket'].split('v')[0]:
