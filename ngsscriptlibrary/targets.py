@@ -181,25 +181,43 @@ class TargetDatabase:
             info[analysis] = self.do_x_in_pipeline(genesis, analysis)
         return info
 
+    def get_todo_for_amplicon_confirmation(self, genesis):
+            genesis = genesis.replace(' ', '')
+            genesis = genesis.lower()
+            todo_list = {'target': genesis, 
+                         'amplicon': True, 
+                         'capture': 'AMPLICON', 
+                         'pakket': 'AMPLICON',
+                         'panel': None,
+                         'cnvscreening': False,
+                         'cnvdiagnostiek': False,
+                         'mozaiek': False,
+                         }
+            return todo_list
+
     def get_todo(self, genesis):
         """Get current capture, pakket, panel, and todo cnv and mosaic.
         Return dict.
         """
+        if 'chr' in genesis.lower() and ':' in genesis:
+            return self.get_todo_for_amplicon_confirmation(genesis)
+
         todo_list = dict()
+
         if not self.check_if_genesis_exists(genesis):
             raise IOError('{} does not exist in {}'.format(genesis, self.db))
         todo_list['amplicon'] = self.do_x_in_pipeline(genesis, 'amplicon')
         if todo_list['amplicon']:
             todo_list['capture'] = 'AMPLICON'
             todo_list['pakket'] = 'AMPLICON'
-            todo_list['panel'] = 'AMPLICON'
+            todo_list['panel'] = None
         else:
             todo_list['capture'] = self.get_current_capture(genesis)
             todo_list['pakket'] = self.get_current_pakket(genesis)
             todo_list['panel'] = self.get_current_panel(genesis)
         todo_list['cnvscreening'] = self.do_x_in_pipeline(genesis, 'cnvscreening')
         todo_list['cnvdiagnostiek'] = self.do_x_in_pipeline(genesis,'cnvdiagnostiek')
-        todo_list['mozaiek'] = self.do_x_in_pipeline(genesis,'mozaiekdiagnostiek')
+        todo_list['mozaiekdiagnostiek'] = self.do_x_in_pipeline(genesis,'mozaiekdiagnostiek')
         todo_list['riskscore'] = self.do_x_in_pipeline(genesis, 'riskscore')    
                                                                                                               
         if todo_list['capture'].split('v')[0] == todo_list['pakket'].split('v')[0]:

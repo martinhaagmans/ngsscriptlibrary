@@ -394,7 +394,7 @@ class RiskScore:
             _header = next(reader)
             for line in reader:
                 chrom, gpos, *_ = line
-                locus = '{}:{}'.format(chrom, pos)
+                locus = '{}:{}'.format(chrom, gpos)
                 loci.append(locus)
 
         with open(self.double) as f:
@@ -412,7 +412,7 @@ class RiskScore:
             _header = next(reader)
             for line in reader:
                 chrom, gpos, score_wt, score_het, score_hom = line
-                locus = '{}:{}'.format(chrom, pos)
+                locus = '{}:{}'.format(chrom, gpos)
                 scores[locus] = Decimal(score_wt), Decimal(score_het), Decimal(score_hom)
         return scores
 
