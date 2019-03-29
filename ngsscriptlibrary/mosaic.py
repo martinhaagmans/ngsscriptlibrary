@@ -198,6 +198,8 @@ def get_indel_dicts(bamfile, target):
     indel_length_coverage = dict()
 
     for c, s, e in parse_bed(target):
+        s = int(s) - 151
+        e = int(e) + 151
 
         for alignment in samfile.fetch(c, int(s), int(e)):
 
@@ -246,7 +248,7 @@ def get_indel_dict_for_locus(bamfile, targetlocus):
             if read_start is None:
                 continue
 
-            locus, length = parse_cigartuple(alignment.cigar, read_start,
+            locus, _length = parse_cigartuple(alignment.cigar, read_start,
                                              alignment.reference_name)
 
             if str(targetlocus) == str(locus):
