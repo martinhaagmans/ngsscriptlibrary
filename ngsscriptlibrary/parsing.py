@@ -453,7 +453,7 @@ class RiskScore:
         try:
             score = scores['{}:{}'.format(locus1_gt, locus2_gt)]
         except KeyError:
-            pass
+            score = 0
         return score
 
     def get_genotypes(self):
