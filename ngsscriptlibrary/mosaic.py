@@ -187,6 +187,9 @@ def parse_cigartuple(cigartuple, read_start, chrom):
 
 
 def pos_in_interval(pos, intervalstart, intervalend):
+    pos = int(pos)
+    intervalstart = int(intervalstart)
+    intervalend = int(intervalend)
     return pos >= intervalstart and pos <= intervalend
 
 
