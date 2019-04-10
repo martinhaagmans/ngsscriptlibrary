@@ -38,7 +38,7 @@ class TargetDatabase:
     """
     def __init__(self, db=None):
         if db is None:
-            url = ('https://github.com/zaag/ngstargets/'
+            url = ('https://github.com/martinhaagmans/ngstargets/'
                    'blob/master/varia/captures.sqlite?raw=true')
             HOME = os.path.expanduser('~')
             download_file(url, '{}/captures.sqlite'.format(HOME))
@@ -457,6 +457,14 @@ class TargetDatabase:
         """.format(pakket[0])
         self.c.execute(sql)
         return self.combine_version(pakket[0], self.list_db_output())
+
+    def get_amplicon_genesiscode(self):
+        sql = """SELECT genesis
+        FROM genesis
+        WHERE amplicon=1 
+        """
+        self.c.execute(sql)
+        return self.list_db_output()
 
     def change(self, sql):
         "Execute and commit sql statement."

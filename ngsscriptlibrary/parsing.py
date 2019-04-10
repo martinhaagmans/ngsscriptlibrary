@@ -20,9 +20,7 @@ def get_header(samplesheet):
 
 
 def samplesheet_to_sample_genesis(samplesheet):
-    """Read samplesheet part with sample info. Use ngsscriptlibrary to get
-    targets to use and analyses to perform. Return dict.
-    """
+    """Read samplesheet part with sample-genesis info, return list of tuples."""
     samples = list()
     with open(samplesheet) as f:
         reader = csv.reader(f)
