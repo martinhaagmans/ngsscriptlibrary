@@ -471,4 +471,3 @@ class RiskScore:
         else:
             score = self.get_sum_single_scores() + self.get_double_score()
         return score
-    
