@@ -24,6 +24,8 @@ from .parsing import get_basecounts
 from .parsing import get_base_count_filelist
 from .parsing import standaardfragmenten_dict_sample
 from .parsing import standaardfragmenten_naar_df
+from .parsing import get_fragment_list
+from .parsing import merge_standaardfrags
 from .parsing import get_pakketten
 from .parsing import get_captures
 from .parsing import mean_doc
