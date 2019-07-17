@@ -388,7 +388,7 @@ def merge_standaardfrags(fragmentlist):
         chromosome, interval = locus.split(':')
         start, end = interval.split('-')
         result, initiaal = result_initiaal.split('/')
-        merged_stdfrags.append((chromosome, start, end, result, initiaal))
+        merged_stdfrags.append((chromosome, int(start), int(end), result, initiaal))
         
     return merged_stdfrags
         
