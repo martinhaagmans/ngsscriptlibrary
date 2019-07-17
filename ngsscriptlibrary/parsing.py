@@ -4,6 +4,7 @@ import time
 import subprocess
 
 import vcf
+import pybedtools
 import xlsxwriter
 import pandas as pd
 
@@ -334,6 +335,63 @@ def standaardfragmenten_dict_sample(sample, df):
             sample_frags.append(d)
     return sample_frags
 
+
+def get_fragment_list(standaard_dict):
+    fragmentlist = list()
+    for standaardfragment in standaard_dict:
+        chromosome = standaardfragment['chr.']
+        start = standaardfragment['fragment min']
+        end = standaardfragment['fragment max']
+        score = standaardfragment['Score']
+        initiaal = standaardfragment['Initialen']
+        if score == ' ':
+            continue
+        if end > start and end - start < 1000:
+            fragmentlist.append((chromosome, start, end, score, initiaal))
+        elif start > end and start - end < 1000:
+            fragmentlist.append((chromosome, end, start, score, initiaal))
+    return fragmentlist
+
+
+
+def merge_standaardfrags(fragmentlist):
+
+    bed = pybedtools.BedTool(fragmentlist)
+    bed_merged = bed.sort().merge()
+    bed_unmerged = bed.sort()
+
+    intersect_all = bed_merged.intersect(bed_unmerged, wa=True, wb=True)
+    merged_with_result = dict()
+
+    for interval in bed_merged:
+        merged_chrom, merged_start, merged_end = str(interval).split()
+        for _ in intersect_all:
+            (merged_chrom_intersect, merged_start_intersect, merged_end_intersect, 
+            _single_chrom, _single_start, _single_end, result, initiaal) = str(_).split()
+            interval_string = f'chr{merged_chrom}:{merged_start}-{merged_end}'
+            c = merged_chrom == merged_chrom_intersect
+            s = merged_start == merged_start_intersect
+            e = merged_end == merged_end_intersect
+            in_dict = interval_string in merged_with_result
+
+            if c and s and e and in_dict:
+                combined_result, combined_initiaal = merged_with_result[interval_string].split('/')
+                combined_result = f'{combined_result}:{result}'
+                combined_initiaal = f'{combined_initiaal}:{initiaal}' 
+                merged_with_result[interval_string] = f'{combined_result}/{combined_initiaal}'
+            elif c and s and e and not in_dict:
+                merged_with_result[interval_string] = f'{result}/{initiaal}'
+
+    merged_stdfrags = list()
+
+    for locus, result_initiaal in merged_with_result.items():
+        chromosome, interval = locus.split(':')
+        start, end = interval.split('-')
+        result, initiaal = result_initiaal.split('/')
+        merged_stdfrags.append((chromosome, int(start), int(end), result, initiaal))
+        
+    return merged_stdfrags
+        
 
 def get_pakketten(todo):
     pakketten = list()
