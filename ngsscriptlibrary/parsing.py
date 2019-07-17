@@ -356,7 +356,6 @@ def get_fragment_list(standaard_dict):
 
 def merge_standaardfrags(fragmentlist):
 
-    fragmentlist = get_fragment_list(standaard_dict)
     bed = pybedtools.BedTool(fragmentlist)
     bed_merged = bed.sort().merge()
     bed_unmerged = bed.sort()
