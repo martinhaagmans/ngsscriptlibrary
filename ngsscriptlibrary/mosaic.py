@@ -421,7 +421,8 @@ def get_data_to_plot(sample, db):
     return sample_plot_data, archive_plot_data
 
 
-def plot_data(sample_plot_data, archive_plot_data, out):
+def plot_data(sample_plot_data, archive_plot_data, out, set_ylim=False):
+    zoom = False
     sns.set_style('darkgrid')
     colordict = {'A': 'green', 'C': 'red', 'T': 'blue', 'G': 'black',
                  'D': 'sienna', 'I': 'orange'}
@@ -438,13 +439,17 @@ def plot_data(sample_plot_data, archive_plot_data, out):
     for locus, data in sorted(sample_plot_data.items()):
 
         for base, percentage in sorted(data.items()):
-
+      
             if base == 'refperc' or base == 'N' or percentage == 0:
                 continue
             if base == 'I':
                 _length, percentage = percentage
                 if percentage == 0:
                     continue
+
+            if zoom is False and percentage > 0.1 and set_ylim is False:
+                zoom = True
+                    
             if base in baselabels:
                 ax.plot(i, percentage, 'rD', c=colordict[base], markersize=10)
             elif base not in baselabels:
@@ -469,8 +474,11 @@ def plot_data(sample_plot_data, archive_plot_data, out):
 
     plt.xticks([_ for _ in range(i)], xticks, rotation='vertical')
     plt.legend()
+    if set_ylim:
+        ax.set_ylim(0,0.1)
     fig.tight_layout()
     plt.savefig(out, dpi=120)
+    return zoom
 
 
 def parse_doc_for_literature_vars(docfile):
