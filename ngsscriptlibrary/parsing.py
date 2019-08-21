@@ -368,7 +368,7 @@ def merge_standaardfrags(fragmentlist):
         for _ in intersect_all:
             (merged_chrom_intersect, merged_start_intersect, merged_end_intersect, 
             _single_chrom, _single_start, _single_end, result, initiaal) = str(_).split()
-            interval_string = f'chr{merged_chrom}:{merged_start}-{merged_end}'
+            interval_string = 'chr{}:{}-{}'.format(merged_chrom, merged_start, merged_end)
             c = merged_chrom == merged_chrom_intersect
             s = merged_start == merged_start_intersect
             e = merged_end == merged_end_intersect
@@ -376,11 +376,11 @@ def merge_standaardfrags(fragmentlist):
 
             if c and s and e and in_dict:
                 combined_result, combined_initiaal = merged_with_result[interval_string].split('/')
-                combined_result = f'{combined_result}:{result}'
-                combined_initiaal = f'{combined_initiaal}:{initiaal}' 
-                merged_with_result[interval_string] = f'{combined_result}/{combined_initiaal}'
+                combined_result = '{}:{}'.format(combined_result, result)
+                combined_initiaal = '{}:{}' .format(combined_initiaal, initiaal)
+                merged_with_result[interval_string] = '{}/{}'.format(combined_result, combined_initiaal)
             elif c and s and e and not in_dict:
-                merged_with_result[interval_string] = f'{result}/{initiaal}'
+                merged_with_result[interval_string] = '{}/{}'.format(result, initiaal)
 
     merged_stdfrags = list()
 
