@@ -192,6 +192,8 @@ class TargetDatabase:
                          'cnvscreening': False,
                          'cnvdiagnostiek': False,
                          'mozaiek': False,
+                         'riskscore': False,
+                         'capispakket': True,
                          }
             return todo_list
 
