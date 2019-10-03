@@ -950,7 +950,7 @@ def parse_sangers_for_seriereport(serie, db=None):
         df = df.join(all_sangers_df['gen']).drop_duplicates()
         return df, failed_samples
     elif all_sangers_df.empty:
-        return pd.DataFrame(), list()
+        return pd.DataFrame(), failed_samples
 
 
 def snpcheck2db(sample, serie, data, db):
