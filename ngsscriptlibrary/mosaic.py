@@ -355,7 +355,7 @@ def bedfile_to_locilist(target):
     return loci
 
 
-def add_sampledata_to_database(bamfile, vcffile, docfile, sample, target, db):
+def add_sampledata_to_database(bamfile, vcffile, docfile, sample, serie, target, db):
     MDB = Mosaic(db)
     ref = MDB.get_reference_dict()
     loci = bedfile_to_locilist(target)
@@ -371,7 +371,7 @@ def add_sampledata_to_database(bamfile, vcffile, docfile, sample, target, db):
             sample_data[l].nonreflist.append(('I', (0, 0)))
 
     data = split_data_for_database(sample_data, vcfloci)
-    MDB.add_data(data, sample, target)
+    MDB.add_data(data, sample, serie, target)
 
 
 def get_data_to_plot(sample, serie, db):
