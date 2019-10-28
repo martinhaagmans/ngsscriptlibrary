@@ -151,6 +151,14 @@ class Mosaic:
 
         return lcd
 
+    def sample_in_db(self, sample, serie):
+        self.c.execute("SELECT * FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
+        if self.c.fetchone():
+            return True
+        else:
+            return False
+
+
 
 def parse_bed(fn):
     with open(fn) as f:
@@ -355,8 +363,11 @@ def bedfile_to_locilist(target):
     return loci
 
 
-def add_sampledata_to_database(bamfile, vcffile, docfile, sample, serie, target, db):
+def add_sampledata_to_database(bamfile, vcffile, docfile, sample, serie, target, pakket, db):
     MDB = Mosaic(db)
+    if MDB.sample_in_db(sample, serie):
+        print('{} already in db'.format(sample))
+        return
     ref = MDB.get_reference_dict()
     loci = bedfile_to_locilist(target)
     sample_data = parse_doc(docfile, ref, loci)
@@ -371,7 +382,8 @@ def add_sampledata_to_database(bamfile, vcffile, docfile, sample, serie, target,
             sample_data[l].nonreflist.append(('I', (0, 0)))
 
     data = split_data_for_database(sample_data, vcfloci)
-    MDB.add_data(data, sample, serie, target)
+    MDB.add_data(data, sample, serie, pakket)
+    return
 
 
 def get_data_to_plot(sample, serie, db):
