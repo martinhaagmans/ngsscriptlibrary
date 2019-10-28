@@ -27,12 +27,13 @@ class Mosaic:
         """Create a table for data per patient."""
         sql = '''CREATE TABLE IF NOT EXISTS patients
         (SAMPLE text NOT NULL,
+        SERIE text NOT NULL, 
         PAKKET text NOT NULL,
         ref text NOT NULL,
         var text NOT NULL,
         ref_below500 text NOT NULL,
         var_below500 text NOT NULL,
-        PRIMARY KEY(SAMPLE, PAKKET))
+        PRIMARY KEY(SAMPLE, SERIE))
         '''
 
         self.c.execute(sql)
@@ -51,15 +52,15 @@ class Mosaic:
         ref.set_index(['Locus'], inplace=True)
         ref.to_sql(con=self.conn, name='refbases', if_exists='replace')
 
-    def add_data(self, data, sample, pakket):
+    def add_data(self, data, sample, serie, pakket):
         """Add dict with patient data to table."""
         ref = json.dumps(data['ref'])
         var = json.dumps(data['var'])
         ref_below500 = json.dumps(data['ref_below500'])
         var_below500 = json.dumps(data['var_below500'])
         sql = '''INSERT INTO patients
-        VALUES ('{}', '{}', '{}', '{}', '{}', '{}')
-        '''.format(sample, pakket, ref, var, ref_below500, var_below500)
+        VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')
+        '''.format(sample, serie, pakket, ref, var, ref_below500, var_below500)
         try:
             self.c.execute(sql)
         except sqlite3.IntegrityError as e:
@@ -106,10 +107,10 @@ class Mosaic:
 
         return d
 
-    def get_sample_data(self, sample):
+    def get_sample_data(self, sample, serie):
         """Query datatable for data for 1 sample. Return a dict."""
         d = dict()
-        self.c.execute("SELECT var FROM patients WHERE (SAMPLE='{}')".format(sample))
+        self.c.execute("SELECT var FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         out = json.loads(self.c.fetchone()[0])
         for locus, data in out.items():
             d[locus] = dict()
@@ -120,14 +121,14 @@ class Mosaic:
                 d[locus][base] = perc
         return d
 
-    def get_sample_low_coverage_var(self, sample):
+    def get_sample_low_coverage_var(self, sample, serie):
         """Query datatable for low coverage variant bases for 1 sample. Return a dict."""
-        self.c.execute("SELECT var_below500 FROM patients WHERE (SAMPLE='{}')".format(sample))
+        self.c.execute("SELECT var_below500 FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         return json.loads(self.c.fetchone()[0])
 
-    def get_sample_low_coverage_ref(self, sample):
+    def get_sample_low_coverage_ref(self, sample, serie):
         """Query datatable for low coverage reference bases for 1 sample. Return a dict."""
-        self.c.execute("SELECT ref_below500 FROM patients WHERE (SAMPLE='{}')".format(sample))
+        self.c.execute("SELECT ref_below500 FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         return json.loads(self.c.fetchone()[0])
 
     def get_nrpatients(self):
@@ -370,16 +371,16 @@ def add_sampledata_to_database(bamfile, vcffile, docfile, sample, target, db):
             sample_data[l].nonreflist.append(('I', (0, 0)))
 
     data = split_data_for_database(sample_data, vcfloci)
-    MDB.add_data(data, sample, 'SOv2')
+    MDB.add_data(data, sample, target)
 
 
-def get_data_to_plot(sample, db):
+def get_data_to_plot(sample, serie, db):
 
     archive_plot_data = dict()
     sample_plot_data = dict()
 
     MDB = Mosaic(db)
-    sample_data = MDB.get_sample_data(sample)
+    sample_data = MDB.get_sample_data(sample, serie)
     archive_data = MDB.get_archive_data(sample)
     total_patients = MDB.get_nrpatients()
 
