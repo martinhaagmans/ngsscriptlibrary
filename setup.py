@@ -7,7 +7,7 @@ def readme():
         return f.read()
 
 setup(name='ngsscriptlibrary',
-      version='1.1.0',
+      version='1.0.5',
       description='Scripts for NGS data-analysis',
       long_description=readme(),
       long_description_content_type='text/markdown',

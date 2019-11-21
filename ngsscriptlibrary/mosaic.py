@@ -3,12 +3,12 @@ import csv
 import json
 import glob
 import sqlite3
-from statistics import mean
 from collections import namedtuple
 from collections import defaultdict
 
 import vcf
 import pysam
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -41,27 +41,16 @@ class Mosaic:
 
     def create_reference_table(self, loci, reference):
         """Create a table with the refbase for all loci in the target."""
-        sql = '''CREATE TABLE IF NOT EXISTS refbases
-        (Locus text NOT NULL,
-        ref text NOT NULL,
-        PRIMARY KEY(Locus, ref))
-        '''
-
-        self.c.execute(sql)
-        self.conn.commit()        
-
-    def fill_reference_table(self, loci, reference):
-        """Fill the refbase table with all loci in the target."""
-        loci = sorted(loci)
-        loci = set(loci)
-        for locus in sorted(loci):
-            base = pysam.faidx(reference, '{}:{}-{}'.format(locus.split(':')[0],
-                                                            locus.split(':')[1],
-                                                            locus.split(':')[1])
-                                                            ).split('\n')[1]
-            sql = 'INSERT INTO refbases VALUES ("{}", "{}")'.format(locus, base)
-            self.c.execute(sql)
-            self.conn.commit()
+        ref = pd.DataFrame([(i,
+                             pysam.faidx(reference,
+                                         '{}:{}-{}'.format(i.split(':')[0],
+                                                           i.split(':')[1],
+                                                           i.split(':')[1])
+                                         ).split('\n')[1])
+                            for i in loci])
+        ref.columns = ['Locus', 'ref']
+        ref.set_index(['Locus'], inplace=True)
+        ref.to_sql(con=self.conn, name='refbases', if_exists='replace')
 
     def add_data(self, data, sample, serie, pakket):
         """Add dict with patient data to table."""
@@ -80,7 +69,7 @@ class Mosaic:
             self.conn.commit()
 
     def get_reference_dict(self):
-        """Query reftable for refbase per locus. Return dict."""
+        """Query reftable for refbase per locus. Return a dict."""
         ref = dict()
         sql = 'SELECT * FROM refbases'
         self.c.execute(sql)
@@ -90,7 +79,7 @@ class Mosaic:
         return ref
 
     def get_archive_data(self, sample):
-        """Query datatable for data for all samples. Return dict."""
+        """Query datatable for data for all samples. Return a dict."""
         sql = '''SELECT ref, var, ref_below500, var_below500
         FROM patients
         WHERE (SAMPLE !='{}')
@@ -119,7 +108,7 @@ class Mosaic:
         return d
 
     def get_sample_data(self, sample, serie):
-        """Query datatable for data for 1 sample. Return dict."""
+        """Query datatable for data for 1 sample. Return a dict."""
         d = dict()
         self.c.execute("SELECT var FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         out = json.loads(self.c.fetchone()[0])
@@ -133,17 +122,17 @@ class Mosaic:
         return d
 
     def get_sample_low_coverage_var(self, sample, serie):
-        """Query datatable for low coverage variant bases for 1 sample. Return dict."""
+        """Query datatable for low coverage variant bases for 1 sample. Return a dict."""
         self.c.execute("SELECT var_below500 FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         return json.loads(self.c.fetchone()[0])
 
     def get_sample_low_coverage_ref(self, sample, serie):
-        """Query datatable for low coverage reference bases for 1 sample. Return dict."""
+        """Query datatable for low coverage reference bases for 1 sample. Return a dict."""
         self.c.execute("SELECT ref_below500 FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         return json.loads(self.c.fetchone()[0])
 
     def get_nrpatients(self):
-        """Query datatable for nr of samples in table. Return int."""
+        """Query datatable for nr of samples in table. Return a int."""
         self.c.execute("SELECT count(*) FROM patients")
         return int(self.c.fetchone()[0])
 
@@ -163,7 +152,6 @@ class Mosaic:
         return lcd
 
     def sample_in_db(self, sample, serie):
-        """Query datatable for nr of samples in table. Return boolean."""
         self.c.execute("SELECT * FROM patients WHERE (SAMPLE='{}' AND SERIE='{}')".format(sample, serie))
         if self.c.fetchone():
             return True
@@ -173,7 +161,6 @@ class Mosaic:
 
 
 def parse_bed(fn):
-    """Open BED-file. Return generator wth chrom, start, end.."""
     with open(fn) as f:
         reader = csv.reader(f, delimiter='\t')
         for line in reader:
@@ -182,7 +169,6 @@ def parse_bed(fn):
 
 
 def good_alignment(alignment):
-    """Check if alignment is mapped with high confidence and not a duplicate. Return boolean"""
     duplicate = alignment.is_duplicate
     mapped = not alignment.is_unmapped
     mapq20 = alignment.mapping_quality > 20
@@ -190,7 +176,6 @@ def good_alignment(alignment):
 
 
 def cigar_has_insertion(cigar):
-    """Check if cigarstring has an I in it. Return boolean"""
     has_insertion = False
     if cigar is not None:
         if 'I' in cigar:
@@ -199,7 +184,6 @@ def cigar_has_insertion(cigar):
 
 
 def parse_cigartuple(cigartuple, read_start, chrom):
-    """Parse cigar to find start and length insertion. Return string."""
     for tup in cigartuple:
         operation, length = tup
         if operation == 2:
@@ -212,7 +196,6 @@ def parse_cigartuple(cigartuple, read_start, chrom):
 
 
 def pos_in_interval(pos, intervalstart, intervalend):
-    """Check if position is in interval. Return boolean"""
     pos = int(pos)
     intervalstart = int(intervalstart)
     intervalend = int(intervalend)
@@ -220,7 +203,6 @@ def pos_in_interval(pos, intervalstart, intervalend):
 
 
 def get_indel_dicts(bamfile, target):
-    """Get all insertion in alignments within target. Return dict."""
     samfile = pysam.AlignmentFile(bamfile, "rb")
 
     indel_coverage = defaultdict(int)
@@ -261,7 +243,6 @@ def get_indel_dicts(bamfile, target):
 
 
 def get_indel_dict_for_locus(bamfile, targetlocus):
-    """Count reads that have indel at locus. Return dict."""
     samfile = pysam.AlignmentFile(bamfile, "rb")
 
     indel_coverage = defaultdict(int)
@@ -291,7 +272,6 @@ def get_indel_dict_for_locus(bamfile, targetlocus):
 
 
 def parse_doc(fn, ref, loci):
-    """Parse DoC file into variant percentages per locus. Return dict."""
     data = dict()
     with open(fn) as f:
         spamreader = csv.reader(f, delimiter='\t')
@@ -320,7 +300,6 @@ def parse_doc(fn, ref, loci):
 
 
 def parse_vcf(vcffile):
-    """"Parse VCF file into list of variantloci. Return list."""
     vcfloci = list()
     for variant in vcf.Reader(open(vcffile), 'r'):
         if variant.FILTER:
@@ -365,13 +344,8 @@ def split_data_for_database(data, vcfloci, DP_treshold=None):
 
 
 def get_mean(fn):
-    coverage = list()
-    with open(fn) as f:
-        _header = next(f)
-        for line in f:
-            _locus, _totaldepth, average_depth, *_ = line.split()
-            coverage.append(float(average_depth))
-    return mean(coverage)
+    df = pd.read_csv(fn, sep='\t')
+    return df['Average_Depth_sample'].mean()
 
 
 def bedfile_to_locilist(target):
@@ -521,7 +495,6 @@ def plot_data(sample_plot_data, archive_plot_data, out, set_ylim=False):
 
 
 def parse_doc_for_literature_vars(docfile):
-    """Parse DoC file into percentage per base per locus. Return dict."""
     data = dict()
     locus_data = namedtuple('mosaic_out', 'DP, A, C, G, T, D')
     with open(docfile) as f:
@@ -548,7 +521,6 @@ def parse_doc_for_literature_vars(docfile):
 
 
 def get_known_mosaic_positions():
-    """Parse csv file with known mosaic variants. Return dict."""
     litvars = dict()
     basedir = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(basedir, 'docs', 'so_literature_vars.csv')) as f:
