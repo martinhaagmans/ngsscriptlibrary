@@ -1022,3 +1022,17 @@ def riskscore_and_genotypes_2db(score, genotypes, serie, sample, target, db):
     else:
         conn.commit()
     conn.close()    
+
+def get_patient_info(sample, serie, db):
+    conn = sqlite3.connect(db)
+    c = conn.cursor()
+    sql = """SELECT SEX, FF, DOB 
+    FROM patientinfo
+    WHERE (SAMPLE='{}' AND SERIE='{}')
+    """.format(sample, serie)
+    c.execute(sql)
+    try:
+        sex, ff, dob = c.fetchone()
+    except TypeError:
+        sex, ff, dob = (str(), str(), str())
+    return (sex, ff, dob)
