@@ -1009,6 +1009,7 @@ def mean_std_2db(mean, std, serie, sample, target, db):
         conn.commit()
     conn.close()
 
+
 def riskscore_and_genotypes_2db(score, genotypes, serie, sample, target, db):
     sql = '''INSERT INTO riskscore
     VALUES ('{}', '{}', '{}', '{}', '{}')
@@ -1023,6 +1024,7 @@ def riskscore_and_genotypes_2db(score, genotypes, serie, sample, target, db):
         conn.commit()
     conn.close()    
 
+
 def get_patient_info(sample, serie, db):
     conn = sqlite3.connect(db)
     c = conn.cursor()
@@ -1036,3 +1038,43 @@ def get_patient_info(sample, serie, db):
     except TypeError:
         sex, ff, dob = (str(), str(), str())
     return (sex, ff, dob)
+
+
+class SexForCNV:
+    def __init__(self, db):
+        self.conn = sqlite3.connect(db)
+        self.c = self.conn.cursor()
+
+    def sample_in_db(self, serie, sample):
+        sql = """SELECT * 
+        FROM patientinfo
+        WHERE(SAMPLE='{}' AND SERIE='{}')
+        """.format(sample, str(serie))
+        
+        self.c.execute(sql)
+        
+        if self.c.fetchone():
+            return True
+        else:
+            return False
+    
+    def sample_is_male(self, serie, sample):
+        sql = """SELECT SEX 
+        FROM patientinfo
+        WHERE(SAMPLE='{}' AND SERIE='{}')
+        """.format(sample, str(serie))
+
+        self.c.execute(sql)
+
+        try:
+            sex = self.c.fetchone()[0]
+        except TypeError:
+            print('Sample niet in database gevonden')
+            raise
+
+        if sex.upper() == 'M':
+            return True
+        elif sex.upper() == 'V':
+            return True
+        else:
+            raise ValueError('Geslacht is niet M of V')

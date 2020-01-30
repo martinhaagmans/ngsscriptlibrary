@@ -57,6 +57,7 @@ from .pipeline_db import compare_snpchecks_serie
 from .pipeline_db import mean_std_2db
 from .pipeline_db import riskscore_and_genotypes_2db
 from .pipeline_db import get_patient_info
+from .pipeline_db import SexForCNV
 
 from .mosaic import Mosaic
 from .mosaic import parse_bed
