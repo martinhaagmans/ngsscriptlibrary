@@ -1075,6 +1075,6 @@ class SexForCNV:
         if sex.upper() == 'M':
             return True
         elif sex.upper() == 'V':
-            return True
+            return False
         else:
             raise ValueError('Geslacht is niet M of V')
