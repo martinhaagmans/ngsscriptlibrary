@@ -30,6 +30,7 @@ from .parsing import get_pakketten
 from .parsing import get_captures
 from .parsing import mean_doc
 from .parsing import RiskScore
+from .parsing import get_file_locations
 
 from .pipeline_db import SampleSheet
 from .pipeline_db import TargetDBCreator
