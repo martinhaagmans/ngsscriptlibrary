@@ -30,11 +30,15 @@ def samplesheet_to_sample_genesis(samplesheet):
                 samples.append(line)
     sample_genesis = list()
     for line in samples:
+        cnvonly = False
         sample = line[0]
         genesis = line[-1]
+        if genesis.endswith('.CNV'):
+            cnvonly = True
         genesis = genesis.replace('.NGS', '')
+        genesis = genesis.replace('.CNV', '')
         genesis = genesis.replace('.SV', '')
-        sample_genesis.append((sample, genesis))
+        sample_genesis.append((sample, genesis, cnvonly))
     return sample_genesis
 
 
@@ -54,20 +58,80 @@ def parse_samplesheet_for_pipeline(samplesheet, db, exclude=None):
     TD = TargetDatabase(db)
     samples_todo = dict()
     for line in samples:
+        cnvonly = False
+        sample = line[0]
         genesis = line[-1]
         serie = line[-2]
         if genesis in exclude or serie in exclude:
             continue
+        if genesis.endswith('.CNV'):
+            cnvonly = True
         genesis = genesis.replace('.NGS', '')
+        genesis = genesis.replace('.CNV', '')
         genesis = genesis.replace('.SV', '')
-        samples_todo[line[0]] = TD.get_todo(genesis)
-        samples_todo[line[0]]['serie'] = serie
-        samples_todo[line[0]]['genesis'] = genesis
-        if not samples_todo[line[0]]['amplicon']:
-            vcapture = samples_todo[line[0]]['capture']
+        samples_todo[sample] = TD.get_todo(genesis)
+        samples_todo[sample]['serie'] = serie
+        samples_todo[sample]['genesis'] = genesis
+        samples_todo[sample]['cnvonly'] = cnvonly
+
+        if not samples_todo[sample]['amplicon']:
+            vcapture = samples_todo[sample]['capture']
             oid = TD.get_oid_for_vcapture(vcapture)
-            samples_todo[line[0]]['oid'] = oid
+            samples_todo[sample]['oid'] = oid
     return samples_todo
+
+
+def get_file_locations(todo, targetrepo):
+    """Read dict with targets and analyses and add correct file locations.
+    Return dict
+    """
+    for s in todo.keys():
+        picard = '{}_target.interval_list'.format(todo[s]['capture'])
+        picard = os.path.join(targetrepo, 'captures', picard)
+
+        cnvtarget = '{}_target.bed'.format(todo[s]['capture'])
+        cnvtarget = os.path.join(targetrepo, 'captures', cnvtarget)
+
+        cap_is_pakket = todo[s]['capispakket']
+
+        if cap_is_pakket:
+            pakket_name = todo[s]['capture']
+            annot = '{}_target.annotated'.format(pakket_name)
+            annot = os.path.join(targetrepo, 'captures', annot)
+            varcal = '{}_generegions.bed'.format(pakket_name)
+            varcal = os.path.join(targetrepo, 'captures', varcal)
+            sanger = '{}_target.bed'.format(pakket_name)
+            sanger = os.path.join(targetrepo, 'captures', sanger)
+            pakket = '{}_target.bed'.format(pakket_name)
+            pakket = os.path.join(targetrepo, 'captures', pakket)
+        elif not cap_is_pakket:
+            pakket_name = todo[s]['pakket']
+            annot = '{}_target.annotated'.format(pakket_name)
+            annot = os.path.join(targetrepo, 'pakketten', annot)
+            varcal = '{}_generegions.bed'.format(pakket_name)
+            varcal = os.path.join(targetrepo, 'pakketten', varcal)
+            sanger = '{}_target.bed'.format(pakket_name)
+            sanger = os.path.join(targetrepo, 'pakketten', sanger)
+            pakket = '{}_target.bed'.format(pakket_name)
+            pakket = os.path.join(targetrepo, 'pakketten', pakket)
+        if todo[s]['panel'] is not None:
+            annot = '{}_target.annotated'.format(todo[s]['panel'])
+            annot = os.path.join(targetrepo, 'panels', annot)
+            sanger = '{}_target.bed'.format(todo[s]['panel'])
+            sanger = os.path.join(targetrepo, 'panels', sanger)
+        if todo[s]['riskscore']:
+            riskscorevcf = '{}_riskscore.vcf'.format(todo[s]['genesis'])
+            riskscorevcf = os.path.join(targetrepo, 'varia', riskscorevcf)
+            todo[s]['riskscorevcf'] = riskscorevcf
+
+        todo[s]['annot'] = annot
+        todo[s]['picard'] = picard
+        todo[s]['cnvtarget'] = cnvtarget
+        todo[s]['pakkettarget'] = pakket
+        todo[s]['varcal'] = varcal
+        todo[s]['sanger'] = sanger
+
+    return todo
 
 
 def get_rs_gpos_dict():
