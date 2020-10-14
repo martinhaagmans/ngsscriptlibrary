@@ -381,8 +381,8 @@ def get_base_count_filelist(outputfile, filelist):
 def standaardfragmenten_naar_df(excelfile):
     "Read excel with standard fragments into dataframe and return dataframe"
     df = pd.read_excel(excelfile)
-    df['Initialen'] = [_.replace('/', '_') for _ in df['Initialen'].values]
-    # df['chr.'] = df['chr.'].astype('int32')
+    df['Initialen'].fillna('', inplace=True)
+    df['Initialen'].replace('/', '_', inplace=True)
     df['primer min'] = df['primer min'].astype('int32')
     df['primer max'] = df['primer max'].astype('int32')
     df['fragment min'] = df['fragment min'].astype('int32')
