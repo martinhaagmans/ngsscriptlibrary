@@ -3,10 +3,10 @@ import os
 import time
 import json
 import sqlite3
+import subprocess
+import pandas as pd
 from collections import namedtuple
 from collections import defaultdict
-
-import pandas as pd
 
 
 class SampleSheet:
