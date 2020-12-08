@@ -39,7 +39,7 @@ class Mosaic:
         self.c.execute(sql)
         self.conn.commit()
 
-    def create_reference_table(self, loci, reference):
+    def create_reference_table(self):
         """Create a table with the refbase for all loci in the target."""
         sql = '''CREATE TABLE IF NOT EXISTS refbases
         (Locus text NOT NULL,

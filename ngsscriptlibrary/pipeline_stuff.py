@@ -1078,3 +1078,93 @@ class SexForCNV:
             return False
         else:
             raise ValueError('Geslacht is niet M of V')
+
+
+def run_command(command):
+    subprocess.run(command,
+                   shell=True,
+                   check=True,
+                   stderr=subprocess.STDOUT)
+
+
+def create_dir(dir_to_create):
+    try:
+        os.makedirs(dir_to_create)
+    except FileExistsError as e:
+        print(e)
+
+
+def create_empty_excelfile(file_name):
+    from openpyxl import Workbook
+    wb = Workbook()
+    wb.save(file_name)
+
+
+def read_config_json(file_name):
+    with open(file_name) as f:
+        return json.load(f)[0]
+
+
+def move_data_to_diagnostic_tree(sample_pakket, outputdir, workdir, serie, amplicons):
+    folders = ['CheckStaf',
+               'alleen cnv/brief gemaakt',
+               'negatief/brief gemaakt',
+               'positief/brief gemaakt']
+
+    cnv_output_dirs = glob.glob('{}/output/CNV_*'.format(workdir))
+
+    for cnv_output_dir in cnv_output_dirs:
+        cnv_dirname = os.path.basename(cnv_output_dir)
+        try:
+            shutil.copytree(cnv_output_dir, os.path.join(
+                outputdir, cnv_dirname))
+        except OSError:
+            pass
+
+    shutil.copyfile('{}/output/MS{}_report.xlsx'.format(workdir, serie),
+                    '{}/MS{}_report.xlsx'.format(outputdir, serie))
+    shutil.copyfile('{}/output/MS{}_QC.pdf'.format(workdir, serie),
+                    '{}/MS{}_QC.pdf'.format(outputdir, serie))
+
+    pakketdone = list()
+
+    for sample, pakket, cnvonly in sample_pakket:
+
+        if 'amplicon' in pakket.lower():
+            continue
+        elif pakket.lower().startswith('chr'):
+            continue
+        elif pakket in amplicons:
+            continue
+
+        pakketdir = '{}/{}'.format(outputdir, pakket)
+
+        if pakket not in pakketdone:
+            pakketdone.append(pakket)
+            create_dir(pakketdir)
+            for folder in folders:
+                create_dir('{}/{}'.format(pakketdir, folder))
+
+        bam = glob.glob('{}/output/{}.*.bam'.format(workdir, sample))[0]
+        bai = glob.glob('{}/output/{}.*.bai'.format(workdir, sample))[0]
+        vcf = glob.glob('{}/output/{}.*.vcf'.format(workdir, sample))[0]
+        idx = glob.glob('{}/output/{}.*.vcf.idx'.format(workdir, sample))[0]
+        report = glob.glob('{}/output/{}.xlsx'.format(workdir, sample))[0]
+
+        for f in bam, bai, vcf, idx, report:
+            _fb, fn = os.path.split(f)
+            if not os.path.isfile('{}/{}/{}'.format(outputdir, pakket, fn)):
+                fn_base, fn_ext = os.path.splitext(fn)
+                if fn_ext == '.vcf':
+                    fn = '{}.{}{}'.format(fn_base, pakket, fn_ext)
+                elif fn_ext == '.idx':
+                    fn_base2, fn_ext2 = os.path.splitext(fn_base)
+                    fn = '{}.{}{}{}'.format(fn_base2, pakket, fn_ext2, fn_ext)
+                if not cnvonly:
+                    shutil.copyfile(
+                        f, '{}/{}/{}'.format(outputdir, pakket, fn))
+                elif cnvonly:
+                    if fn.endswith('vcf') or fn.endswith('idx'):
+                        continue
+                    shutil.copyfile(
+                        f, '{}/{}/{}/{}'.format(outputdir, pakket, 'alleen cnv', fn))
